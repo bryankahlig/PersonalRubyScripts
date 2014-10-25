@@ -3,6 +3,7 @@ require 'exifr'
 require 'date'
 
 $errorDate = DateTime.new(1900,1,1)
+$testRun = false
 
 def buildDestinationPathByFilename(path, fileToMove, baseDestinationPath, indexOfYearInFilename)
   fileYear = fileToMove[indexOfYearInFilename, 4]
@@ -13,22 +14,12 @@ def buildDestinationPathByFilename(path, fileToMove, baseDestinationPath, indexO
   return resultingPath + filenameWithoutPath
 end
 
-#def buildDestinationPathByCreatedDate(path, fileToMove, baseDestinationPath)
-#  fullFilename = path + fileToMove
-#  fileDate = File.ctime(fullFilename)
-#  fileYear = "%04d" % fileDate.year
-#  fileMonth = "%02d" % fileDate.month
-#  resultingPath = baseDestinationPath + fileYear + "/" + fileMonth + "/"
-#  FileUtils::mkdir_p resultingPath
-#  return resultingPath + fileToMove    
-#end
-
 def buildDestinationPathByExifData(path, fileToMove, baseDestinationPath)
   fileDate = Time.now
   puts "FileDate init:" + fileDate.strftime("%Y%m%d")
   if fileToMove.end_with? "jpg" or fileToMove.end_with? "jpeg"
     fileDate = getExifDateForJpg(path + fileToMove)
-    puts "FileDate init:" + fileDate.strftime("%Y%m%d")
+    puts "FileDate exif:" + fileDate.strftime("%Y%m%d")
   else
     if fileToMove.end_with? "mp4"
       fileDate = getDateFromMp4Filename(path + fileToMove)
@@ -90,28 +81,33 @@ def shouldSkipFile(filename)
   return (filename.start_with?(".") or filename == "Thumbs.db")
 end
 
-def copyFiles(files)
+def copyFiles(files, fromPath, baseDestinationPath, indexOfYearInFilename)
   if !files.nil?
     files.each { |file|
       next if shouldSkipFile(file)
       fullOriginationFilename = fromPath + file
-      puts "Working on file:" + fromPath + file
-      #destinationPath = buildDestinationPathByFilename(fromPath, file, baseDestinationPath, indexOfYearInFilename)
+      puts "Working on file:" + fullOriginationFilename
       destinationPath = buildDestinationPathByExifData(fromPath, file, baseDestinationPath)
-  #    destinationPath = buildDestinationPathByCreatedDate(fromPath, file, baseDestinationPath)
+      if (destinationPath == "ERROR")
+        puts "Using filename for date for: " + fromPath
+        destinationPath = buildDestinationPathByFilename(fromPath, file, baseDestinationPath, indexOfYearInFilename)
+      end
       puts "DestinationPath:" + destinationPath
       if (destinationPath == "ERROR")
         puts "Skipping " + fromPath
       else
-        puts "DOING NOTHING"
-        #FileUtils::copy_file(fullOriginationFilename, destinationPath)
+        if ($testRun)
+          puts "DOING NOTHING"
+        else
+          FileUtils::copy_file(fullOriginationFilename, destinationPath)
+        end
       end
     }
   end
 end
 
 def processFolder(fromPath, baseDestinationPath, indexOfYearInFilename)
-  copyFiles(getFiles(fromPath))
+  copyFiles(getFiles(fromPath), fromPath, baseDestinationPath, indexOfYearInFilename)
   dirs = getDirectories(fromPath)
   if dirs.nil?
     dirs.each { |directory|
