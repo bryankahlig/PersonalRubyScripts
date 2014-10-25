@@ -3,7 +3,7 @@ require 'exifr'
 require 'date'
 
 $errorDate = DateTime.new(1900,1,1)
-$testRun = false
+$testRun = true
 
 def buildDestinationPathByFilename(path, fileToMove, baseDestinationPath, indexOfYearInFilename)
   fileYear = fileToMove[indexOfYearInFilename, 4]
@@ -22,7 +22,8 @@ def buildDestinationPathByExifData(path, fileToMove, baseDestinationPath)
     puts "FileDate exif:" + fileDate.strftime("%Y%m%d")
   else
     if fileToMove.end_with? "mp4"
-      fileDate = getDateFromMp4Filename(path + fileToMove)
+      #we can't get exif data from mp4 files
+      return "ERROR"
     end
   end
   if (fileDate == $errorDate)
@@ -54,11 +55,11 @@ def getExifDateForJpg(filename)
   end
 end
 
-def getDateFromMp4Filename(filename)
+def getDateFromMp4Filename(filenamem, indexOfYearInFilename)
   puts "MP4 Filename:" + filename
   puts "MP4 Edited Filename:" + File.basename(filename)
-  puts "MP4 Stripped Filename:" + File.basename(filename)[4..11]
-  return DateTime.strptime(File.basename(filename)[4..11], "%Y%m%d")
+  puts "MP4 Stripped Filename:" + File.basename(filename)[(indexOfYearInFilename)..(indexOfYearInFilename+7)]
+  return DateTime.strptime(File.basename(filename)[(indexOfYearInFilename)..(indexOfYearInFilename+7)], "%Y%m%d")
 end
 
 def getFiles(path)
@@ -99,7 +100,11 @@ def copyFiles(files, fromPath, baseDestinationPath, indexOfYearInFilename)
         if ($testRun)
           puts "DOING NOTHING"
         else
-          FileUtils::copy_file(fullOriginationFilename, destinationPath)
+          if (File.exists?(destinationPath))
+            File.delete(fullOriginationFilename)
+          else
+            FileUtils::move(fullOriginationFilename, destinationPath)
+          end
         end
       end
     }
@@ -130,4 +135,4 @@ def copyBryanFiles()
 end
 
 copyBryanFiles()
-
+puts("Done!")
