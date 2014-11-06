@@ -9,6 +9,9 @@ def buildDestinationPathByFilename(path, fileToMove, baseDestinationPath, indexO
   fileYear = fileToMove[indexOfYearInFilename, 4]
   fileMonth = fileToMove[indexOfYearInFilename + 4, 2]
   filenameWithoutPath = fileToMove
+  if (!fileYear.match(/^\d+$/) or !fileMonth.match(/^\d+$/))
+    return "ERROR"
+  end
   resultingPath = baseDestinationPath + fileYear + "/" + fileMonth + "/"
   FileUtils::mkdir_p resultingPath
   return resultingPath + filenameWithoutPath
@@ -134,5 +137,6 @@ def copyBryanFiles()
   processFolder(basePhoneImagePath, baseDestinationImagePath, 4)
 end
 
-copyBryanFiles()
+#copyBryanFiles()
+copyMariaFiles()
 puts("Done!")
