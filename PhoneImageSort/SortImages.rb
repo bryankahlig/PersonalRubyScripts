@@ -126,15 +126,19 @@ def processFolder(fromPath, baseDestinationPath, indexOfYearInFilename)
 end
 
 def copyMariaFiles()
-  baseDestinationImagePath = "E:/Pictures/"
-  basePhoneImagePath = "E:/Pictures/From Maria\'s Phone/Camera roll/"
-  processFolder(basePhoneImagePath, baseDestinationImagePath, 3)
+  baseDestinationImagePath = "D:/Pictures/"
+  basePhoneImagePath = "D:/Pictures/From Maria\'s Phone/Android/"
+  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
+  basePhoneImagePath = "D:/Pictures/From Maria\'s Phone/Android/.LiveShot/"
+  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
 end
 
 def copyBryanFiles()
-  baseDestinationImagePath = "E:/Pictures/"
-  basePhoneImagePath = "E:/Pictures/From Bryan Phone/Camera roll/Camera/"
-  processFolder(basePhoneImagePath, baseDestinationImagePath, 4)
+  baseDestinationImagePath = "D:/Pictures/"
+  basePhoneImagePath = "D:/Pictures/From Bryan Phone/"
+  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
+  basePhoneImagePath = "D:/Pictures/From Bryan Phone/.LiveShot/"
+  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
 end
 
 #copyBryanFiles()
