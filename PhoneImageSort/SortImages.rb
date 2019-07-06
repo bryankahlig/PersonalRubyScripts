@@ -3,9 +3,13 @@ require 'exifr'
 require 'date'
 
 $errorDate = DateTime.new(1900,1,1)
-$testRun = true
+$testRun = false
 
-def buildDestinationPathByFilename(path, fileToMove, baseDestinationPath, indexOfYearInFilename)
+def buildDestinationPathByFilename(path, fileToMove, baseDestinationPath)
+  indexOfYearInFilename = getIndexOfYearInFilename(fileToMove)
+  if (indexOfYearInFilename == -1)
+    return "ERROR"
+  end
   fileYear = fileToMove[indexOfYearInFilename, 4]
   fileMonth = fileToMove[indexOfYearInFilename + 4, 2]
   filenameWithoutPath = fileToMove
@@ -40,6 +44,8 @@ def buildDestinationPathByExifData(path, fileToMove, baseDestinationPath)
 end
 
 def getExifDateForJpg(filename)
+  require 'exifr/jpeg'
+  puts "Getting EXIF data for: " + filename
   jpeg = EXIFR::JPEG.new(filename)
   if (jpeg.exif?)
     if (!jpeg.date_time.nil?)
@@ -82,10 +88,10 @@ def getDirectories(path)
 end
 
 def shouldSkipFile(filename)
-  return (filename.start_with?(".") or filename == "Thumbs.db")
+  return (filename.start_with?(".") or filename == "Thumbs.db" or getIndexOfYearInFilename(filename) == -1)
 end
 
-def copyFiles(files, fromPath, baseDestinationPath, indexOfYearInFilename)
+def copyFiles(files, fromPath, baseDestinationPath)
   if !files.nil?
     files.each { |file|
       next if shouldSkipFile(file)
@@ -93,8 +99,9 @@ def copyFiles(files, fromPath, baseDestinationPath, indexOfYearInFilename)
       puts "Working on file:" + fullOriginationFilename
       destinationPath = buildDestinationPathByExifData(fromPath, file, baseDestinationPath)
       if (destinationPath == "ERROR")
-        puts "Using filename for date for: " + fromPath
-        destinationPath = buildDestinationPathByFilename(fromPath, file, baseDestinationPath, indexOfYearInFilename)
+        indexOfYearInFilename = getIndexOfYearInFilename(file)
+        puts "Using filename for date for: %s with year index of %d" % [file, indexOfYearInFilename]
+        destinationPath = buildDestinationPathByFilename(fromPath, file, baseDestinationPath)
       end
       puts "DestinationPath:" + destinationPath
       if (destinationPath == "ERROR")
@@ -114,33 +121,47 @@ def copyFiles(files, fromPath, baseDestinationPath, indexOfYearInFilename)
   end
 end
 
-def processFolder(fromPath, baseDestinationPath, indexOfYearInFilename)
-  copyFiles(getFiles(fromPath), fromPath, baseDestinationPath, indexOfYearInFilename)
+def processFolder(fromPath, baseDestinationPath)
+  copyFiles(getFiles(fromPath), fromPath, baseDestinationPath)
   dirs = getDirectories(fromPath)
   if dirs.nil?
     dirs.each { |directory|
       puts "Working on directory:" + directory
-      processFolder(directory, baseDestinationPath, 4)
+      processFolder(directory, baseDestinationPath)
     }
+  end
+end
+
+def getIndexOfYearInFilename(filename)
+  case filename[0,3]
+  when "IMG"
+    return 4
+  when "PHO"
+    return 6
+  when "VID"
+    return filename.index("_") + 1
+  else
+    puts "UNRECOGNIZED FILE FORMAT: " + filename
+    return -1
   end
 end
 
 def copyMariaFiles()
   baseDestinationImagePath = "D:/Pictures/"
   basePhoneImagePath = "D:/Pictures/From Maria\'s Phone/Android/"
-  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
+  processFolder(basePhoneImagePath, baseDestinationImagePath)
   basePhoneImagePath = "D:/Pictures/From Maria\'s Phone/Android/.LiveShot/"
-  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
+  processFolder(basePhoneImagePath, baseDestinationImagePath)
 end
 
 def copyBryanFiles()
   baseDestinationImagePath = "D:/Pictures/"
   basePhoneImagePath = "D:/Pictures/From Bryan Phone/"
-  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
+  processFolder(basePhoneImagePath, baseDestinationImagePath)
   basePhoneImagePath = "D:/Pictures/From Bryan Phone/.LiveShot/"
-  processFolder(basePhoneImagePath, baseDestinationImagePath, 6)
+  processFolder(basePhoneImagePath, baseDestinationImagePath)
 end
 
-#copyBryanFiles()
-copyMariaFiles()
+copyBryanFiles()
+#copyMariaFiles()
 puts("Done!")
